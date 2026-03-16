@@ -49,7 +49,7 @@ function AdvisorsPage() {
             <p className="mt-1 text-sm text-slate-600">Languages: {advisor.languages}</p>
 
             <div className="mt-5">
-              <span className="premium-btn inline-flex rounded-xl bg-ink px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
+              <span className="premium-btn inline-flex w-full justify-center rounded-xl bg-ink px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
                 Book Now
               </span>
             </div>
