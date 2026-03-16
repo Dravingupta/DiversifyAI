@@ -1,6 +1,22 @@
-import { Link, NavLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { getStoredUser, logoutUser } from '../../services/api';
 
 function AppLayout({ title, subtitle, children }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(getStoredUser());
+
+  useEffect(() => {
+    setCurrentUser(getStoredUser());
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUser(null);
+    navigate('/login');
+  };
+
   return (
     <div className="page-shell min-h-screen bg-[#fffdfa] text-ink">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -26,14 +42,29 @@ function AppLayout({ title, subtitle, children }) {
             Advisors
           </NavLink>
         </nav>
-        <div className="hidden items-center gap-2 md:flex">
-          <Link to="/login" className="rounded-full border border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-700">
-            Login
-          </Link>
-          <Link to="/register" className="premium-btn rounded-full bg-ink px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
-            Register
-          </Link>
-        </div>
+        {currentUser ? (
+          <div className="hidden items-center gap-2 md:flex">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-emerald-800">
+              {currentUser.name}
+            </span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-700"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <div className="hidden items-center gap-2 md:flex">
+            <Link to="/login" className="rounded-full border border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-700">
+              Login
+            </Link>
+            <Link to="/register" className="premium-btn rounded-full bg-ink px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
+              Register
+            </Link>
+          </div>
+        )}
       </header>
 
       <main className="mx-auto w-full max-w-7xl px-6 pb-20 md:px-10">

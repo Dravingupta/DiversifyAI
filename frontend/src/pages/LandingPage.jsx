@@ -1,7 +1,9 @@
 import allocationVisionImg from '../assets/allocation-vision.svg';
 import signalEngineImg from '../assets/signal-engine.svg';
 import advisorBridgeImg from '../assets/advisor-bridge.svg';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { getStoredUser, logoutUser } from '../../services/api';
 
 const features = [
   {
@@ -71,6 +73,20 @@ const outcomes = [
 ];
 
 function LandingPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(getStoredUser());
+
+  useEffect(() => {
+    setCurrentUser(getStoredUser());
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUser(null);
+    navigate('/login');
+  };
+
   return (
     <div className="page-shell min-h-screen overflow-x-hidden bg-[#fffdfa] text-ink">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -89,9 +105,27 @@ function LandingPage() {
           <a href="#insights" className="story-link">Insights</a>
           <a href="#advisor" className="story-link">Advisors</a>
         </nav>
-        <Link to="/login" className="premium-btn rounded-full bg-ink px-5 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-700">
-          Start Analysis
-        </Link>
+        {currentUser ? (
+          <div className="hidden items-center gap-2 md:flex">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-emerald-800">
+              {currentUser.name}
+            </span>
+            <Link to="/dashboard" className="premium-btn rounded-full bg-ink px-5 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-700">
+              Dashboard
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-slate-500"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <Link to="/login" className="premium-btn rounded-full bg-ink px-5 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-700">
+            Start Analysis
+          </Link>
+        )}
       </header>
 
       <main className="mx-auto w-full max-w-7xl px-6 pb-20 md:px-10">
