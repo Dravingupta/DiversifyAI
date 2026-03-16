@@ -1,0 +1,580 @@
+1. Project Overview
+
+PortfolioPilot is an AI-powered portfolio analysis platform designed to help beginner and intermediate investors understand their investment portfolios. The system analyzes the user's stock investments, identifies sector concentration, calculates diversification and risk scores, and provides AI-driven suggestions for portfolio improvement.
+
+Additionally, the platform allows users to connect with financial advisors if deeper investment guidance is required.
+
+2. Objectives
+
+The main objectives of this platform are:
+
+Help users understand where their money is invested
+
+Analyze portfolio diversification
+
+Identify risk concentration
+
+Provide AI-driven investment insights
+
+Allow users to connect with financial advisors
+
+3. Target Users
+Beginner Investors
+
+Users who have started investing but lack knowledge about diversification and risk management.
+
+Intermediate Investors
+
+Users who want to analyze their portfolio performance and optimize asset allocation.
+
+Financial Advisors
+
+Professionals who can connect with users and provide investment consultation.
+
+4. Core Features
+4.1 User Authentication
+
+Users can create and manage accounts.
+
+Features
+
+User registration
+
+Secure login
+
+Password authentication
+
+Profile management
+
+Purpose
+Maintain personalized portfolio data and analysis history.
+
+4.2 Portfolio Input System
+
+Users can add their investments to create their portfolio.
+
+Input Methods
+
+Manual entry of stocks
+
+CSV file upload
+
+Broker statement upload (future enhancement)
+
+Example Input
+
+Stock	Quantity	Price
+Reliance	10	₹2500
+TCS	5	₹3500
+HDFC Bank	8	₹1600
+
+Purpose
+Collect user portfolio data for analysis.
+
+4.3 Portfolio Breakdown Visualization
+
+The system displays where the user’s money is invested.
+
+Visualizations
+
+Sector allocation chart
+
+Stock allocation chart
+
+Investment distribution
+
+Example Output
+
+Sector Allocation:
+
+Sector	Allocation
+Banking	35%
+IT	25%
+Energy	20%
+Pharma	10%
+FMCG	10%
+
+Purpose
+Help users quickly understand their portfolio structure.
+
+4.4 AI Portfolio Analysis (DiversifyAI Model)
+
+The DiversifyAI model analyzes portfolio composition.
+
+Analysis Includes
+Sector Concentration
+
+Detects over-exposure to certain sectors.
+
+Example insight:
+
+Your portfolio has 45% exposure to the banking sector.
+
+Diversification Score
+
+Example scale:
+
+Score	Interpretation
+0–40	Poor diversification
+40–70	Moderate diversification
+70–100	Well diversified
+Risk Score
+
+Estimates the risk level of the portfolio.
+
+Factors considered:
+
+Sector concentration
+
+Stock volatility
+
+Asset allocation
+
+4.5 AI Recommendations
+
+Based on portfolio analysis, the AI suggests improvements.
+
+Examples:
+
+Add stocks from underrepresented sectors
+
+Reduce concentration in risky assets
+
+Include index ETFs or stable sectors
+
+Example suggestion:
+
+Your portfolio lacks exposure to the healthcare sector. Consider adding pharmaceutical stocks to improve diversification.
+
+4.6 Portfolio Health Score
+
+The platform calculates a Portfolio Health Score combining diversification, risk balance, and sector spread.
+
+Example:
+
+Portfolio Health: 74 / 100
+
+Interpretation:
+
+0–40 → Poor portfolio structure
+
+40–70 → Moderate portfolio health
+
+70–100 → Strong diversified portfolio
+
+4.7 Financial Advisor Connection
+
+Users can connect with professional advisors.
+
+Features
+
+Advisor listing
+
+Consultation booking
+
+Chat system
+
+Video call integration (future)
+
+Purpose
+Provide professional guidance beyond AI recommendations.
+
+4.8 Dashboard
+
+The dashboard provides a summary of the user’s investment portfolio.
+
+Dashboard Components
+
+Total investment value
+
+Portfolio performance
+
+Diversification score
+
+Risk score
+
+Sector allocation chart
+
+AI recommendations panel
+
+5. Optional Advanced Features
+5.1 Portfolio Rebalancing Suggestions
+
+AI suggests how users can rebalance their portfolio.
+
+Example:
+
+Action	Suggestion
+Reduce	Banking exposure by 10%
+Increase	Healthcare sector allocation
+5.2 Mutual Fund Comparison
+
+Users can compare their portfolio with popular mutual funds or market indexes.
+
+Example comparison:
+
+User portfolio vs Nifty 50 allocation
+
+5.3 Market Alerts
+
+Users receive alerts for important market movements affecting their investments.
+
+Examples:
+
+Stock price drop alerts
+
+Sector trend alerts
+
+6. System Architecture
+Frontend
+
+React / Next.js
+
+Tailwind CSS
+
+Chart.js or Recharts
+
+Backend
+
+Node.js
+
+Express.js
+
+Database
+
+MongoDB / PostgreSQL
+
+APIs
+
+Yahoo Finance API
+
+Alpha Vantage
+
+Finnhub
+
+AI Integration
+
+OpenAI / Gemini API
+
+Custom DiversifyAI logic
+
+7. Security Features
+
+Secure authentication
+
+Encrypted user data
+
+API rate limiting
+
+Input validation
+
+8. Future Enhancements
+
+Possible future upgrades include:
+
+Automatic broker integration
+
+Real-time portfolio tracking
+
+AI-powered market predictions
+
+Mobile application version
+
+Robo-advisory features
+
+9. Expected Outcomes
+
+After using PortfolioPilot, users will:
+
+Understand their investment distribution
+
+Identify risk exposure
+
+Improve portfolio diversification
+
+Make more informed investment decisions
+
+Access professional financial advice when needed
+
+
+ok this is the project i will work on frontend for this and below is the frontend overview 
+PortfolioPilot – API Infrastructure (Frontend)
+Base API URL
+
+Frontend should configure a base URL.
+
+http://localhost:5000/api
+
+Example in frontend:
+
+const API_BASE = "http://localhost:5000/api"
+1. Authentication APIs
+Register User
+
+Endpoint
+
+POST /api/auth/register
+
+Request Body
+
+{
+ "name": "Madhav Gill",
+ "email": "madhav@gmail.com",
+ "password": "123456"
+}
+
+Response
+
+{
+ "message": "User registered successfully"
+}
+Login User
+
+Endpoint
+
+POST /api/auth/login
+
+Request Body
+
+{
+ "email": "madhav@gmail.com",
+ "password": "123456"
+}
+
+Response
+
+{
+ "token": "jwt_token_here",
+ "user": {
+   "id": "12345",
+   "name": "Madhav Gill"
+ }
+}
+
+Frontend must store:
+
+token
+
+Used for authenticated requests.
+
+2. Portfolio APIs
+
+These APIs manage user investments.
+
+Add Stock to Portfolio
+
+Endpoint
+
+POST /api/portfolio/add
+
+Headers
+
+Authorization: Bearer <token>
+
+Request Body
+
+{
+ "stockSymbol": "RELIANCE",
+ "quantity": 10,
+ "buyPrice": 2500
+}
+
+Response
+
+{
+ "message": "Stock added successfully"
+}
+Get User Portfolio
+
+Endpoint
+
+GET /api/portfolio
+
+Headers
+
+Authorization: Bearer <token>
+
+Response
+
+{
+ "totalInvestment": 25000,
+ "totalStocks": 3,
+ "stocks": [
+   {
+     "symbol": "RELIANCE",
+     "quantity": 10,
+     "sector": "Energy",
+     "currentValue": 12000
+   },
+   {
+     "symbol": "TCS",
+     "quantity": 5,
+     "sector": "IT",
+     "currentValue": 8000
+   }
+ ]
+}
+
+Frontend uses this data for:
+
+portfolio table
+
+portfolio summary card
+
+3. Sector Allocation API
+
+Used for portfolio diversification visualization.
+
+Get Sector Distribution
+
+Endpoint
+
+GET /api/portfolio/sectors
+
+Headers
+
+Authorization: Bearer <token>
+
+Response
+
+{
+ "Banking": 35,
+ "IT": 25,
+ "Energy": 20,
+ "Pharma": 10,
+ "FMCG": 10
+}
+
+Frontend uses this response for:
+
+sector pie chart
+
+diversification visualization
+
+4. Portfolio Analysis API
+
+This API triggers AI analysis.
+
+Analyze Portfolio
+
+Endpoint
+
+POST /api/analysis/portfolio
+
+Headers
+
+Authorization: Bearer <token>
+
+Response
+
+{
+ "diversificationScore": 68,
+ "riskScore": 55,
+ "portfolioHealth": 72,
+ "recommendations": [
+   "Reduce banking exposure",
+   "Add pharmaceutical stocks",
+   "Consider index ETFs for diversification"
+ ]
+}
+
+Frontend displays:
+
+risk score
+
+diversification score
+
+AI recommendation panel
+
+5. Advisor APIs
+
+These APIs allow users to connect with advisors.
+
+Get Advisors
+
+Endpoint
+
+GET /api/advisors
+
+Response
+
+[
+ {
+   "id": "1",
+   "name": "Rahul Sharma",
+   "experience": "10 years",
+   "rating": 4.8,
+   "specialization": "Equity Investment"
+ },
+ {
+   "id": "2",
+   "name": "Neha Gupta",
+   "experience": "8 years",
+   "rating": 4.6,
+   "specialization": "Portfolio Management"
+ }
+]
+
+Frontend shows advisor list.
+
+Book Advisor Consultation
+
+Endpoint
+
+POST /api/advisor/book
+
+Headers
+
+Authorization: Bearer <token>
+
+Request Body
+
+{
+ "advisorId": "1",
+ "date": "2026-04-10",
+ "time": "15:00"
+}
+
+Response
+
+{
+ "message": "Consultation booked successfully"
+}
+
+Frontend shows booking confirmation.
+
+6. API Authentication Flow
+
+All protected APIs require:
+
+Authorization: Bearer <JWT_TOKEN>
+
+Example request header:
+
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+7. API Groups Overview
+API Group	Purpose
+Auth APIs	Login & registration
+Portfolio APIs	Manage investments
+Sector APIs	Portfolio breakdown
+Analysis APIs	AI portfolio insights
+Advisor APIs	Financial consultation
+8. API Communication Flow
+
+Frontend communication pattern:
+
+User Action
+     ↓
+React Component
+     ↓
+Axios API Call
+     ↓
+Backend API
+     ↓
+JSON Response
+     ↓
+Update UI
+
+
+
+understand this project then we will move further
