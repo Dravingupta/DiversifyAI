@@ -20,6 +20,240 @@ body {
   background: #fffdfa;
 }
 
+.enter-fade,
+.enter-up,
+.enter-left,
+.enter-right {
+  opacity: 0;
+  animation-duration: 760ms;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.enter-fade {
+  animation-name: fadeInSoft;
+}
+
+.enter-up {
+  animation-name: slideInUp;
+}
+
+.enter-left {
+  animation-name: slideInLeft;
+}
+
+.enter-right {
+  animation-name: slideInRight;
+}
+
+.page-shell {
+  background-image: radial-gradient(circle at 14% 18%, rgba(16, 185, 129, 0.06), transparent 34%),
+    radial-gradient(circle at 86% 78%, rgba(14, 165, 233, 0.06), transparent 32%);
+}
+
+.hero-orb {
+  animation: drift 14s ease-in-out infinite;
+}
+
+.hero-orb--two {
+  animation-delay: -5s;
+}
+
+.hero-orb--three {
+  animation-duration: 18s;
+  animation-delay: -3s;
+}
+
+.headline-accent {
+  background: linear-gradient(92deg, #0ea5e9 0%, #10b981 48%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.premium-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -130%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.35) 48%, transparent 100%);
+  transition: left 460ms ease;
+}
+
+.premium-btn:hover::after {
+  left: 130%;
+}
+
+.nav-pill {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #334155;
+  transition: all 220ms ease;
+}
+
+.nav-pill:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #0f766e;
+  transform: translateY(-1px);
+}
+
+.nav-pill--active {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.input-shell {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  border-radius: 0.9rem;
+  padding: 0.82rem 0.9rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: #0f172a;
+  outline: none;
+  transition: border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.input-shell:focus {
+  border-color: rgba(16, 185, 129, 0.62);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+}
+
+.table-row {
+  transition: background-color 220ms ease;
+}
+
+.table-row:hover {
+  background: rgba(240, 253, 250, 0.7);
+}
+
+.metric-card {
+  transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+}
+
+.hover-panel {
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 320ms ease;
+}
+
+.hover-panel:hover {
+  transform: translateY(-8px);
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.16);
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.12);
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.08), rgba(14, 165, 233, 0.06) 42%, transparent 70%);
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.insight-card {
+  animation: pulseGlow 3.2s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.04);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 14px 34px rgba(16, 185, 129, 0.12);
+  }
+  50% {
+    box-shadow: 0 18px 40px rgba(14, 165, 233, 0.18);
+  }
+}
+
+@keyframes fadeInSoft {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(-26px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(26px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter-fade,
+  .enter-up,
+  .enter-left,
+  .enter-right,
+  .hero-orb,
+  .insight-card {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .story-link {
   position: relative;
   color: #1f2937;

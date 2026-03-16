@@ -1,0 +1,17 @@
+<svg width="640" height="280" viewBox="0 0 640 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="640" y2="280" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FED7AA"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="280" rx="28" fill="url(#g2)"/>
+  <rect x="28" y="40" width="584" height="56" rx="16" fill="#ffffff" fill-opacity="0.78"/>
+  <text x="52" y="74" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#0F172A">Risk Signal: Moderate</text>
+  <path d="M42 210C104 186 148 146 206 164C264 182 303 236 360 214C420 191 447 129 505 132C545 134 573 154 598 174" stroke="#0F172A" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="206" cy="164" r="11" fill="#ffffff" stroke="#0F172A" stroke-width="4"/>
+  <circle cx="360" cy="214" r="11" fill="#ffffff" stroke="#0F172A" stroke-width="4"/>
+  <circle cx="505" cy="132" r="11" fill="#ffffff" stroke="#0F172A" stroke-width="4"/>
+  <rect x="430" y="182" width="156" height="54" rx="14" fill="#ffffff" fill-opacity="0.8"/>
+  <text x="452" y="216" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#0F172A">+12.4%</text>
+</svg>
