@@ -92,6 +92,54 @@ body {
   left: 130%;
 }
 
+.nav-pill {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #334155;
+  transition: all 220ms ease;
+}
+
+.nav-pill:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #0f766e;
+  transform: translateY(-1px);
+}
+
+.nav-pill--active {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.input-shell {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  border-radius: 0.9rem;
+  padding: 0.82rem 0.9rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: #0f172a;
+  outline: none;
+  transition: border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.input-shell:focus {
+  border-color: rgba(16, 185, 129, 0.62);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+}
+
+.table-row {
+  transition: background-color 220ms ease;
+}
+
+.table-row:hover {
+  background: rgba(240, 253, 250, 0.7);
+}
+
 .metric-card {
   transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
 }
