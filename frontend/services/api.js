@@ -1,11 +1,32 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
+
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+const persistAuthSession = (payload) => {
+  if (payload?.token) {
+    localStorage.setItem(TOKEN_KEY, payload.token);
+  }
+  if (payload?.user) {
+    localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+  }
+};
 
 export const registerUser = async (name, email, password) => {
   const response = await api.post('/auth/register', {
@@ -14,6 +35,7 @@ export const registerUser = async (name, email, password) => {
     password,
   });
 
+  persistAuthSession(response.data);
   return response.data;
 };
 
@@ -23,11 +45,26 @@ export const loginUser = async (email, password) => {
     password,
   });
 
-  if (response.data && response.data.token) {
-    localStorage.setItem('token', response.data.token);
+  persistAuthSession(response.data);
+  return response.data;
+};
+
+export const logoutUser = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+};
+
+export const getStoredUser = () => {
+  const rawUser = localStorage.getItem(USER_KEY);
+  if (!rawUser) {
+    return null;
   }
 
-  return response.data;
+  try {
+    return JSON.parse(rawUser);
+  } catch (error) {
+    return null;
+  }
 };
 
 export default api;

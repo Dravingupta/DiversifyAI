@@ -28,7 +28,7 @@ function RegisterPage() {
 
     try {
       await registerUser(formData.name, formData.email, formData.password);
-      navigate('/login');
+      navigate('/dashboard');
     } catch (apiError) {
       setError(apiError.response?.data?.message || 'Unable to register. Please try again.');
     } finally {
