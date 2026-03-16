@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage';
 import PortfolioPage from './pages/PortfolioPage';
 import AnalysisPage from './pages/AnalysisPage';
 import AdvisorsPage from './pages/AdvisorsPage';
+import AdvisorDetailPage from './pages/AdvisorDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
@@ -16,6 +17,7 @@ function App() {
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/analysis" element={<AnalysisPage />} />
         <Route path="/advisors" element={<AdvisorsPage />} />
+        <Route path="/advisors/:advisorId" element={<AdvisorDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
