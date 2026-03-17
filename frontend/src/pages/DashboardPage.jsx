@@ -132,6 +132,42 @@ function DashboardPage() {
     ['Small Cap', 15, 'bg-amber-500'],
   ];
 
+  // Sector Allocation view colors (CSS classes to hex for gradient)
+  const hexColors = {
+    'bg-slate-800': '#1e293b',
+    'bg-cyan-500': '#06b6d4',
+    'bg-amber-500': '#f59e0b',
+    'bg-emerald-500': '#10b981',
+    'bg-orange-400': '#fb923c',
+    'bg-indigo-500': '#6366f1',
+    'bg-rose-500': '#f43f5e'
+  };
+
+  // Generate Conic Gradient for Sector Allocation
+  let currentSectorPct = 0;
+  const sectorGradientStops = sectorAllocation.length > 0 
+    ? sectorAllocation.map(([_, pct, colorClass]) => {
+        const hex = hexColors[colorClass] || '#cbd5e1';
+        const start = currentSectorPct;
+        currentSectorPct += pct;
+        return `${hex} ${start}% ${currentSectorPct}%`;
+      }).join(', ')
+    : '#cbd5e1 0% 100%';
+
+  // Generate Conic Gradient for Market Cap
+  let currentCapPct = 0;
+  const capGradientStops = marketCapMix.map(([_, pct, colorClass]) => {
+      const hex = hexColors[colorClass] || '#cbd5e1';
+      const start = currentCapPct;
+      currentCapPct += pct;
+      return `${hex} ${start}% ${currentCapPct}%`;
+    }).join(', ');
+
+  // Identify concentration & underweight
+  const topSectorName = sectorAllocation.length > 0 ? sectorAllocation[0][0] : 'None';
+  const topSectorPct = sectorAllocation.length > 0 ? sectorAllocation[0][1] : 0;
+  const bottomSectorName = sectorAllocation.length > 0 ? sectorAllocation[sectorAllocation.length - 1][0] : 'None';
+
   const recs = analysisData?.recommendations || analysisData?.actionableInsights || [
     'Add more stocks to generate specific analysis recommendations.'
   ];
@@ -162,7 +198,10 @@ function DashboardPage() {
 
           <div className="mt-5 grid gap-6 sm:grid-cols-[0.95fr_1.05fr]">
             <div className="grid place-items-center rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <div className="relative h-48 w-48 rounded-full bg-[conic-gradient(#1e293b_0_35%,#06b6d4_35%_60%,#f59e0b_60%_80%,#10b981_80%_90%,#fb923c_90%_100%)]">
+              <div 
+                className="relative h-48 w-48 rounded-full" 
+                style={{ background: `conic-gradient(${sectorGradientStops})` }}
+              >
                 <div className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white grid place-items-center text-center">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Diversify</p>
                   <p className="font-display text-2xl leading-none">{analysisData?.diversificationScore || 0}</p>
@@ -208,7 +247,10 @@ function DashboardPage() {
           <p className="mt-2 text-sm text-slate-600">Understand allocation by Large, Mid, and Small Cap in seconds.</p>
           <div className="mt-5 grid gap-5 sm:grid-cols-[0.85fr_1.15fr]">
             <div className="grid place-items-center rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <div className="relative h-40 w-40 rounded-full bg-[conic-gradient(#10b981_0_56%,#06b6d4_56%_85%,#f59e0b_85%_100%)]">
+              <div 
+                className="relative h-40 w-40 rounded-full" 
+                style={{ background: `conic-gradient(${capGradientStops})` }}
+              >
                 <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
               </div>
             </div>
@@ -231,21 +273,23 @@ function DashboardPage() {
           <p className="mt-2 text-sm text-slate-600">A simple visual breakdown that any beginner can understand instantly.</p>
           <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
             <div className="flex h-10 w-full text-[10px] font-bold uppercase tracking-[0.14em] text-white">
-              <div className="grid place-items-center bg-slate-800" style={{ width: '35%' }}>Banking 35</div>
-              <div className="grid place-items-center bg-cyan-500" style={{ width: '25%' }}>IT 25</div>
-              <div className="grid place-items-center bg-amber-500" style={{ width: '20%' }}>Energy 20</div>
-              <div className="grid place-items-center bg-emerald-500" style={{ width: '10%' }}>Pharma 10</div>
-              <div className="grid place-items-center bg-orange-400" style={{ width: '10%' }}>FMCG 10</div>
+              {sectorAllocation.map(([sector, pct, color]) => (
+                pct > 0 ? (
+                  <div key={sector} className={`grid place-items-center ${color} overflow-hidden whitespace-nowrap`} style={{ width: `${pct}%` }}>
+                    {pct > 15 ? `${sector} ${pct}` : pct > 5 ? pct : ''}
+                  </div>
+                ) : null
+              ))}
             </div>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-sm">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Concentration Risk</p>
-              <p className="mt-1 font-semibold">High in Banking (35%)</p>
+              <p className="mt-1 font-semibold">{topSectorPct > 30 ? `High in ${topSectorName} (${topSectorPct}%)` : `Moderate (${topSectorName} ${topSectorPct}%)`}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-sm">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Underweight Sector</p>
-              <p className="mt-1 font-semibold">Healthcare / Pharma</p>
+              <p className="mt-1 font-semibold">{bottomSectorName}</p>
             </div>
           </div>
         </article>
@@ -255,7 +299,7 @@ function DashboardPage() {
         <article className="hover-panel enter-up rounded-3xl border border-slate-200 bg-white p-6" style={{ animationDelay: '520ms' }}>
           <div className="flex items-center justify-between">
             <h2 className="font-display text-2xl tracking-tight">Performance Pulse</h2>
-            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-cyan-700">6M Trend</span>
+            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-cyan-700">Illustrative</span>
           </div>
           <p className="mt-2 text-sm text-slate-600">Visual path of portfolio value movement to build confidence and context.</p>
           <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">

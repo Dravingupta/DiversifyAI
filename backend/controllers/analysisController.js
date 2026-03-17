@@ -31,9 +31,14 @@ You must return ONLY a strictly valid JSON object matching the exact format belo
   "diversificationScore": <number 0-100>,
   "riskScore": <number 0-100 indicating risk level>,
   "portfolioHealth": <number 0-100>,
+  "marketCapMix": {
+    "Large Cap": <number 0-100 percentage>,
+    "Mid Cap": <number 0-100 percentage>,
+    "Small Cap": <number 0-100 percentage>
+  },
   "recommendations": ["<specific actionable recommendation 1>", "<recommendation 2>", "<recommendation 3>"]
 }
-Limit recommendations to exactly 3 or 4 concise, extremely specific and professional insights.
+Limit recommendations to exactly 3 or 4 concise, extremely specific and professional insights. Ensure marketCapMix percentages sum exactly to 100 based on realistic Indian stock market capitalizations.
 `;
 
     const response = await client.chat.completions.create({
@@ -59,6 +64,7 @@ Limit recommendations to exactly 3 or 4 concise, extremely specific and professi
       diversificationScore: parsedData.diversificationScore,
       riskScore: parsedData.riskScore,
       portfolioHealth: parsedData.portfolioHealth,
+      marketCapMix: parsedData.marketCapMix,
       recommendations: parsedData.recommendations
     });
   } catch (error) {
