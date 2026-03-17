@@ -1,10 +1,127 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
 import { advisors } from '../data/advisors';
+import { createPaymentOrder, getStoredUser, verifyPayment } from '../../services/api';
+
+const RAZORPAY_SCRIPT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
+const FALLBACK_TEST_RAZORPAY_KEY = 'rzp_test_your_key';
+const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || FALLBACK_TEST_RAZORPAY_KEY;
+
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const existingScript = document.querySelector(`script[src="${RAZORPAY_SCRIPT_SRC}"]`);
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(true), { once: true });
+      existingScript.addEventListener('error', () => resolve(false), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = RAZORPAY_SCRIPT_SRC;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
+function parseConsultationAmount(feeText) {
+  const amount = Number(String(feeText || '').replace(/[^0-9]/g, ''));
+  return Number.isFinite(amount) && amount > 0 ? amount : 2000;
+}
 
 function AdvisorDetailPage() {
   const { advisorId } = useParams();
   const advisor = advisors.find((item) => item.id === advisorId);
+  const [isPaying, setIsPaying] = useState(false);
+
+  const handlePayment = async () => {
+    if (isPaying) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to book a consultation');
+      return;
+    }
+
+    if (!razorpayKey.startsWith('rzp_test_') || razorpayKey === FALLBACK_TEST_RAZORPAY_KEY) {
+      alert('Razorpay test key is not configured on frontend');
+      return;
+    }
+
+    let hasOpenedCheckout = false;
+    setIsPaying(true);
+
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        alert('Razorpay SDK failed to load');
+        return;
+      }
+
+      const orderResponse = await createPaymentOrder(parseConsultationAmount(advisor?.fee));
+      const order = orderResponse?.order || orderResponse;
+
+      if (!order?.id || !order?.amount) {
+        throw new Error('Server error');
+      }
+
+      const user = getStoredUser();
+
+      const options = {
+        key: razorpayKey,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'PortfolioPilot',
+        description: 'Consultation Fee',
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            await verifyPayment(response);
+            alert('Payment Successful');
+          } catch (error) {
+            alert(error?.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setIsPaying(false);
+          }
+        },
+        prefill: {
+          name: user?.name || 'User',
+          email: user?.email || 'user@email.com',
+        },
+        theme: {
+          color: '#3399cc',
+        },
+        modal: {
+          ondismiss: () => {
+            setIsPaying(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (event) => {
+        alert(event?.error?.description || 'Payment failed');
+        setIsPaying(false);
+      });
+
+      hasOpenedCheckout = true;
+      rzp.open();
+    } catch (error) {
+      alert(error?.response?.data?.message || error?.message || 'Server error');
+    } finally {
+      if (!hasOpenedCheckout) {
+        setIsPaying(false);
+      }
+    }
+  };
 
   if (!advisor) {
     return (
@@ -59,8 +176,12 @@ function AdvisorDetailPage() {
         </div>
 
         <div className="mt-7 flex flex-wrap gap-3">
-          <button className="premium-btn rounded-xl bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white">
-            Book Consultation
+          <button
+            className="premium-btn rounded-xl bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handlePayment}
+            disabled={isPaying}
+          >
+            {isPaying ? 'Processing...' : 'Book Consultation'}
           </button>
           <button className="rounded-xl border border-slate-300 px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-700">
             Start Chat

@@ -100,4 +100,15 @@ export const analyzePortfolio = async () => {
   return response.data;
 };
 
+// Payment APIs
+export const createPaymentOrder = async (amount) => {
+  const response = await api.post('/payment/create-order', { amount });
+  return response.data;
+};
+
+export const verifyPayment = async (paymentPayload) => {
+  const response = await api.post('/payment/verify', paymentPayload);
+  return response.data;
+};
+
 export default api;
