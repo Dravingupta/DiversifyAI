@@ -142,8 +142,6 @@ const getSectorDistribution = async (req, res) => {
   }
 };
 
-module.exports = { searchStocks, getPortfolio, addStockToPortfolio, getSectorDistribution, removeStockFromPortfolio };
-
 const removeStockFromPortfolio = async (req, res) => {
   const { symbol } = req.params;
   try {
@@ -160,3 +158,5 @@ const removeStockFromPortfolio = async (req, res) => {
     res.status(500).json({ message: 'Server error removing stock', error: error.message });
   }
 };
+
+module.exports = { searchStocks, getPortfolio, addStockToPortfolio, getSectorDistribution, removeStockFromPortfolio };
