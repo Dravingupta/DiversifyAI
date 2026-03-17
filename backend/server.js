@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const healthRoutes = require("./routes/healthRoutes");
+const portfolioRoutes = require("./routes/portfolioRoutes");
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/portfolio", portfolioRoutes);
 app.use("/api", healthRoutes);
 
 const startServer = async () => {

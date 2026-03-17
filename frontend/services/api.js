@@ -67,4 +67,19 @@ export const getStoredUser = () => {
   }
 };
 
+// Portfolio APIs
+export const getPortfolio = async () => {
+  const response = await api.get('/portfolio');
+  return response.data;
+};
+
+export const addStockToPortfolio = async (stockSymbol, quantity, buyPrice) => {
+  const response = await api.post('/portfolio/add', {
+    stockSymbol,
+    quantity,
+    buyPrice,
+  });
+  return response.data;
+};
+
 export default api;
