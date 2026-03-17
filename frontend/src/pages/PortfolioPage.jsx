@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '../components/AppLayout';
-import { getPortfolio, addStockToPortfolio, searchIndianStocks } from '../../services/api';
+import { getPortfolio, addStockToPortfolio, searchIndianStocks, removeStockFromPortfolio } from '../../services/api';
 
 function PortfolioPage() {
   const [portfolioData, setPortfolioData] = useState({ stocks: [], totalInvestment: 0 });
@@ -56,6 +56,18 @@ function PortfolioPage() {
     setSearchQuery(stock.symbol);
     setShowSuggestions(false);
     setErrorMsg('');
+  };
+
+  const handleRemoveStock = async (symbol) => {
+    if (window.confirm(`Are you sure you want to remove ${symbol} from your portfolio?`)) {
+      try {
+        await removeStockFromPortfolio(symbol);
+        await fetchPortfolio();
+      } catch (err) {
+        console.error('Failed to remove stock', err);
+        setErrorMsg('Failed to remove stock. Please try again.');
+      }
+    }
   };
 
   const handleAddStock = async (e) => {
@@ -189,34 +201,47 @@ function PortfolioPage() {
           ) : (
             <table className="w-full min-w-[36rem] text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase tracking-[0.14em] text-slate-500">
-                  <th className="pb-3">Symbol</th>
-                  <th className="pb-3">Qty</th>
-                  <th className="pb-3">Buy Price</th>
-                  <th className="pb-3">Sector</th>
-                  <th className="pb-3">Current Value</th>
+                <tr className="border-b border-slate-200 text-xs uppercase tracking-[0.14em] text-slate-500 text-left">
+                  <th className="pb-3 pr-2">Symbol</th>
+                  <th className="pb-3 px-2">Qty</th>
+                  <th className="pb-3 px-2">Buy Price</th>
+                  <th className="pb-3 px-2">Sector</th>
+                  <th className="pb-3 px-2">Current Value</th>
+                  <th className="pb-3 pl-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {portfolioData.stocks.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-8 text-center text-slate-400">
+                    <td colSpan="6" className="py-8 text-center text-slate-400">
                       No holdings yet. Add your first stock above!
                     </td>
                   </tr>
                 ) : (
                   portfolioData.stocks.map((stock, i) => (
                     <tr key={i} className="table-row border-b border-slate-100">
-                      <td className="py-4 font-bold text-slate-700">{stock.symbol}</td>
-                      <td className="py-4 text-slate-600">{stock.quantity}</td>
-                      <td className="py-4 text-slate-600">₹{stock.buyPrice}</td>
-                      <td className="py-4 text-slate-600">
+                      <td className="py-4 font-bold text-slate-700 pr-2">{stock.symbol}</td>
+                      <td className="py-4 text-slate-600 px-2">{stock.quantity}</td>
+                      <td className="py-4 text-slate-600 px-2">₹{stock.buyPrice}</td>
+                      <td className="py-4 text-slate-600 px-2">
                          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
                            {stock.sector}
                          </span>
                       </td>
-                      <td className="py-4 font-semibold text-emerald-600">
+                      <td className="py-4 font-semibold text-emerald-600 px-2">
                          ₹{stock.currentValue?.toLocaleString() || (stock.buyPrice * stock.quantity).toLocaleString()}
+                      </td>
+                      <td className="py-4 text-right pl-2">
+                        <button
+                          onClick={() => handleRemoveStock(stock.symbol)}
+                          className="flex items-center gap-1 ml-auto text-xs font-bold uppercase tracking-[0.1em] text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                          title="Remove from portfolio"
+                        >
+                          <svg className="w-4 h-4 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          <span>Delete</span>
+                        </button>
                       </td>
                     </tr>
                   ))

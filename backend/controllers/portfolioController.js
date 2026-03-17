@@ -96,6 +96,11 @@ const addStockToPortfolio = async (req, res) => {
     try {
       const quote = await yahooFinance.quote(normalizedSymbol + '.NS');
       if (quote && quote.regularMarketPrice) currentPrice = quote.regularMarketPrice;
+      
+      const summary = await yahooFinance.quoteSummary(normalizedSymbol + '.NS', { modules: ['assetProfile'] }).catch(() => null);
+      if (summary && summary.assetProfile && summary.assetProfile.sector) {
+        actualSector = summary.assetProfile.sector;
+      }
     } catch (e) {
       console.error('Could not fetch live price on add', normalizedSymbol);
     }
@@ -158,5 +163,4 @@ const removeStockFromPortfolio = async (req, res) => {
     res.status(500).json({ message: 'Server error removing stock', error: error.message });
   }
 };
-
 module.exports = { searchStocks, getPortfolio, addStockToPortfolio, getSectorDistribution, removeStockFromPortfolio };

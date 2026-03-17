@@ -112,3 +112,8 @@ export const verifyPayment = async (paymentPayload) => {
 };
 
 export default api;
+
+export const removeStockFromPortfolio = async (symbol) => {
+  const response = await api.delete(`/portfolio/remove/${symbol}`);
+  return response.data;
+};
