@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const ChatRoom = require("../models/ChatRoom");
 const Message = require("../models/Message");
 
@@ -7,7 +9,13 @@ const createChatRoom = async (req, res) => {
     const userId = req.user._id;
 
     if (!advisorId) {
-      return res.status(400).json({ message: "advisorId is required" });
+      return res.status(400).json({
+        message: "Advisor ID is required to create chat",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(advisorId))) {
+      return res.status(400).json({ message: "Invalid advisor ID" });
     }
 
     let room = await ChatRoom.findOne({ user: userId, advisor: advisorId });

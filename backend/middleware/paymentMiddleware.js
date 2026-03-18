@@ -1,27 +1,59 @@
+const mongoose = require("mongoose");
+
 const Payment = require("../models/Payment");
+const ChatRoom = require("../models/ChatRoom");
 
 const checkPaymentAccess = async (req, res, next) => {
   try {
     const userId = req.user && req.user._id;
-
     if (!userId) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    const paidPayment = await Payment.findOne({
+    let advisorId = req.body && req.body.advisorId;
+    const chatId = (req.params && req.params.chatId) || (req.body && req.body.chatId);
+
+    if (!advisorId && chatId) {
+      if (!mongoose.Types.ObjectId.isValid(chatId)) {
+        return res.status(400).json({ message: "Invalid chat ID" });
+      }
+
+      const chat = await ChatRoom.findOne({ _id: chatId, user: userId }).select("advisor");
+      if (!chat) {
+        return res.status(404).json({ message: "Chat not found" });
+      }
+
+      advisorId = chat.advisor;
+    }
+
+    if (!advisorId) {
+      return res.status(400).json({
+        message: "Advisor ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(advisorId))) {
+      return res.status(400).json({ message: "Invalid advisor ID" });
+    }
+
+    const payment = await Payment.findOne({
       user: userId,
+      advisor: advisorId,
       status: "paid",
     });
 
-    if (!paidPayment) {
+    if (!payment) {
       return res.status(403).json({
-        message: "Access denied. Please complete payment to start chat.",
+        message: "Access denied. Please complete payment first.",
       });
     }
 
     return next();
   } catch (error) {
-    return res.status(500).json({ message: "Server error" });
+    console.error(error);
+    return res.status(500).json({
+      message: "Server error in payment middleware",
+    });
   }
 };
 

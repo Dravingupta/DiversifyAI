@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 
 const Payment = require("../models/Payment");
 const razorpay = require("../services/razorpayService");
@@ -9,13 +10,21 @@ const createOrder = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    const { amount } = req.body;
+    const { amount, advisorId } = req.body;
     const parsedAmount = Number(amount);
 
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       return res
         .status(400)
         .json({ message: "Amount must be a valid number greater than 0" });
+    }
+
+    if (!advisorId) {
+      return res.status(400).json({ message: "advisorId is required" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(advisorId)) {
+      return res.status(400).json({ message: "advisorId must be a valid ID" });
     }
 
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -36,6 +45,7 @@ const createOrder = async (req, res) => {
 
     const payment = await Payment.create({
       user: req.user._id,
+      advisor: advisorId,
       amount: parsedAmount,
       currency: order.currency,
       razorpay_order_id: order.id,
@@ -59,13 +69,22 @@ const verifyPayment = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      advisorId,
+    } = req.body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !advisorId) {
       return res.status(400).json({
         message:
-          "razorpay_order_id, razorpay_payment_id and razorpay_signature are required",
+          "razorpay_order_id, razorpay_payment_id, razorpay_signature and advisorId are required",
       });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(advisorId)) {
+      return res.status(400).json({ message: "advisorId must be a valid ID" });
     }
 
     if (!process.env.RAZORPAY_KEY_SECRET) {
@@ -97,6 +116,7 @@ const verifyPayment = async (req, res) => {
 
     payment.razorpay_payment_id = razorpay_payment_id;
     payment.razorpay_signature = razorpay_signature;
+    payment.advisor = advisorId;
 
     if (isSignatureValid) {
       payment.status = "paid";

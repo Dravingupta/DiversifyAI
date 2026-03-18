@@ -1,6 +1,7 @@
 export const advisors = [
   {
     id: '1',
+    _id: '64b000000000000000000001',
     name: 'Rahul Sharma',
     initials: 'RS',
     avatarTone: 'from-cyan-500 to-emerald-500',
@@ -14,6 +15,7 @@ export const advisors = [
   },
   {
     id: '2',
+    _id: '64b000000000000000000002',
     name: 'Neha Gupta',
     initials: 'NG',
     avatarTone: 'from-amber-500 to-orange-500',
@@ -27,6 +29,7 @@ export const advisors = [
   },
   {
     id: '3',
+    _id: '64b000000000000000000003',
     name: 'Aman Kapoor',
     initials: 'AK',
     avatarTone: 'from-violet-500 to-indigo-500',
@@ -40,6 +43,7 @@ export const advisors = [
   },
   {
     id: '4',
+    _id: '64b000000000000000000004',
     name: 'Priya Menon',
     initials: 'PM',
     avatarTone: 'from-pink-500 to-rose-500',
@@ -53,6 +57,7 @@ export const advisors = [
   },
   {
     id: '5',
+    _id: '64b000000000000000000005',
     name: 'Vikram Sethi',
     initials: 'VS',
     avatarTone: 'from-teal-500 to-sky-500',
@@ -66,6 +71,7 @@ export const advisors = [
   },
   {
     id: '6',
+    _id: '64b000000000000000000006',
     name: 'Kavya Iyer',
     initials: 'KI',
     avatarTone: 'from-emerald-500 to-lime-500',

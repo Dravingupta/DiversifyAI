@@ -7,6 +7,12 @@ const paymentSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  advisor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    index: true,
+  },
   amount: {
     type: Number,
     required: true,

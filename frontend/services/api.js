@@ -101,8 +101,8 @@ export const analyzePortfolio = async () => {
 };
 
 // Payment APIs
-export const createPaymentOrder = async (amount) => {
-  const response = await api.post('/payment/create-order', { amount });
+export const createPaymentOrder = async (amount, advisorId) => {
+  const response = await api.post('/payment/create-order', { amount, advisorId });
   return response.data;
 };
 
