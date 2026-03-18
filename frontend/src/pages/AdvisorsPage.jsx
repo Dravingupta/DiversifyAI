@@ -1,8 +1,72 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
 import { advisors } from '../data/advisors';
+import { getAdvisors } from '../../services/api';
+
+function mergeAdvisorProfile(advisorAccount, index) {
+  const template = advisors[index % advisors.length] || advisors[0];
+
+  return {
+    id: advisorAccount?._id || template.id,
+    _id: advisorAccount?._id || template._id,
+    name: advisorAccount?.name || template.name,
+    initials: (advisorAccount?.name || template.name)
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('') || template.initials,
+    avatarTone: template.avatarTone,
+    experience: template.experience,
+    rating: template.rating,
+    specialization: template.specialization,
+    languages: template.languages,
+    clients: template.clients,
+    fee: template.fee,
+    bio: template.bio,
+    email: advisorAccount?.email || null,
+  };
+}
 
 function AdvisorsPage() {
+  const [advisorAccounts, setAdvisorAccounts] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchAdvisors = async () => {
+      try {
+        const response = await getAdvisors();
+        if (!mounted) {
+          return;
+        }
+
+        setAdvisorAccounts(Array.isArray(response?.advisors) ? response.advisors : []);
+      } catch (_error) {
+        if (mounted) {
+          setAdvisorAccounts([]);
+        }
+      }
+    };
+
+    fetchAdvisors();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const displayedAdvisors = useMemo(() => {
+    if (advisorAccounts.length === 0) {
+      return advisors;
+    }
+
+    return advisorAccounts.map((advisorAccount, index) =>
+      mergeAdvisorProfile(advisorAccount, index)
+    );
+  }, [advisorAccounts]);
+
   return (
     <AppLayout
       title="Advisor Connect"
@@ -10,7 +74,7 @@ function AdvisorsPage() {
     >
       <section className="grid gap-4 md:grid-cols-3">
         {[
-          ['Available Consultants', `${advisors.length}`],
+          ['Available Consultants', `${displayedAdvisors.length}`],
           ['Average Rating', '4.7 / 5'],
           ['Avg Response Time', '< 2 hours'],
         ].map(([label, value], index) => (
@@ -22,10 +86,10 @@ function AdvisorsPage() {
       </section>
 
       <section className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {advisors.map((advisor, index) => (
+        {displayedAdvisors.map((advisor, index) => (
           <Link
-            key={advisor.id}
-            to={`/advisors/${advisor.id}`}
+            key={advisor._id || advisor.id}
+            to={`/advisors/${advisor._id || advisor.id}`}
             className="hover-panel enter-up block rounded-3xl border border-slate-200 bg-white p-6"
             style={{ animationDelay: `${170 + index * 80}ms` }}
           >
@@ -44,6 +108,7 @@ function AdvisorsPage() {
               <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">{advisor.rating}</span>
             </div>
             <h3 className="mt-2 font-display text-3xl tracking-tight">{advisor.name}</h3>
+            {advisor.email ? <p className="mt-1 text-sm text-slate-500">{advisor.email}</p> : null}
             <p className="mt-2 text-sm text-slate-600">Experience: {advisor.experience}</p>
             <p className="mt-1 text-sm text-slate-600">Clients: {advisor.clients}</p>
             <p className="mt-1 text-sm text-slate-600">Languages: {advisor.languages}</p>

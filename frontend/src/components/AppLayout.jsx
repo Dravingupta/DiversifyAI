@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, PieChart, TrendingUp, Users, Menu, X, Leaf } from 'lucide-react';
+import { LayoutDashboard, PieChart, TrendingUp, Users, Menu, X, Leaf, Briefcase, Shield } from 'lucide-react';
 import { getStoredUser, logoutUser } from '../../services/api';
 
 const NavItem = ({ to, icon: Icon, label }) => (
@@ -40,6 +40,7 @@ function AppLayout({ title, subtitle, children }) {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(getStoredUser());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const currentUserRole = (currentUser && currentUser.role) || 'client';
 
   useEffect(() => {
     setCurrentUser(getStoredUser());
@@ -78,7 +79,13 @@ function AppLayout({ title, subtitle, children }) {
               <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
               <NavItem to="/portfolio" icon={PieChart} label="Portfolio" />
               <NavItem to="/analysis" icon={TrendingUp} label="Analysis" />
-              <NavItem to="/advisors" icon={Users} label="Advisors" />
+              {currentUserRole === 'admin' ? (
+                <NavItem to="/admin/dashboard" icon={Shield} label="Admin Desk" />
+              ) : currentUserRole === 'advisor' ? (
+                <NavItem to="/advisor/dashboard" icon={Briefcase} label="Advisor Desk" />
+              ) : (
+                <NavItem to="/advisors" icon={Users} label="Advisors" />
+              )}
             </div>
           </nav>
 
@@ -145,9 +152,19 @@ function AppLayout({ title, subtitle, children }) {
             <NavLink to="/analysis" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
               <TrendingUp className="h-4 w-4 opacity-70" /> Analysis
             </NavLink>
-            <NavLink to="/advisors" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
-              <Users className="h-4 w-4 opacity-70" /> Advisors
-            </NavLink>
+            {currentUserRole === 'admin' ? (
+              <NavLink to="/admin/dashboard" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
+                <Shield className="h-4 w-4 opacity-70" /> Admin Desk
+              </NavLink>
+            ) : currentUserRole === 'advisor' ? (
+              <NavLink to="/advisor/dashboard" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
+                <Briefcase className="h-4 w-4 opacity-70" /> Advisor Desk
+              </NavLink>
+            ) : (
+              <NavLink to="/advisors" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
+                <Users className="h-4 w-4 opacity-70" /> Advisors
+              </NavLink>
+            )}
             
             <div className="my-2 h-px w-full bg-slate-200/50" />
             

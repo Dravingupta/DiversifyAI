@@ -6,8 +6,13 @@ const ChatRoom = require("../models/ChatRoom");
 const checkPaymentAccess = async (req, res, next) => {
   try {
     const userId = req.user && req.user._id;
+    const userRole = (req.user && req.user.role) || "client";
     if (!userId) {
       return res.status(401).json({ message: "Not authorized" });
+    }
+
+    if (userRole === "advisor") {
+      return next();
     }
 
     let advisorId = req.body && req.body.advisorId;

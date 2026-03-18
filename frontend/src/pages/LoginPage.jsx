@@ -16,8 +16,13 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await loginUser(email, password);
-      navigate('/dashboard');
+      const authResponse = await loginUser(email, password);
+      const nextRoute = authResponse?.user?.role === 'advisor'
+        ? '/advisor/dashboard'
+        : authResponse?.user?.role === 'admin'
+          ? '/admin/dashboard'
+          : '/dashboard';
+      navigate(nextRoute);
     } catch (apiError) {
       setError(apiError.response?.data?.message || 'Unable to login. Please try again.');
     } finally {

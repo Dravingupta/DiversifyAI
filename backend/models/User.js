@@ -22,6 +22,13 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6,
   },
+  role: {
+    type: String,
+    enum: ["client", "advisor", "admin"],
+    default: "client",
+    required: true,
+    index: true,
+  },
   // Timestamp for when the user account was created.
   createdAt: {
     type: Date,

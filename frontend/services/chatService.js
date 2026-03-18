@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const CHAT_API_BASE_URL = 'http://localhost:5000/api/chat';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const CHAT_API_BASE_URL = `${API_BASE_URL.replace(/\/$/, '')}/chat`;
 
 const chatApi = axios.create({
   baseURL: CHAT_API_BASE_URL,
@@ -73,5 +74,14 @@ export const getMessages = async (chatId) => {
     return response.data;
   } catch (error) {
     throw new Error(getErrorMessage(error, 'Failed to fetch messages'));
+  }
+};
+
+export const getAdvisorChatRooms = async () => {
+  try {
+    const response = await chatApi.get('/advisor/rooms', getAuthConfig());
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, 'Failed to fetch advisor chat rooms'));
   }
 };

@@ -27,8 +27,13 @@ function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await registerUser(formData.name, formData.email, formData.password);
-      navigate('/dashboard');
+      const authResponse = await registerUser(
+        formData.name,
+        formData.email,
+        formData.password
+      );
+      const nextRoute = authResponse?.user?.role === 'admin' ? '/admin/dashboard' : '/dashboard';
+      navigate(nextRoute);
     } catch (apiError) {
       setError(apiError.response?.data?.message || 'Unable to register. Please try again.');
     } finally {

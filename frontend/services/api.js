@@ -49,6 +49,20 @@ export const loginUser = async (email, password) => {
   return response.data;
 };
 
+export const getAdvisors = async () => {
+  const response = await api.get('/auth/advisors');
+  return response.data;
+};
+
+export const createAdvisorByAdmin = async ({ name, email, password }) => {
+  const response = await api.post('/auth/admin/create-advisor', {
+    name,
+    email,
+    password,
+  });
+  return response.data;
+};
+
 export const logoutUser = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
@@ -108,6 +122,11 @@ export const createPaymentOrder = async (amount, advisorId) => {
 
 export const verifyPayment = async (paymentPayload) => {
   const response = await api.post('/payment/verify', paymentPayload);
+  return response.data;
+};
+
+export const getAdvisorEarnings = async () => {
+  const response = await api.get('/payment/advisor/earnings');
   return response.data;
 };
 

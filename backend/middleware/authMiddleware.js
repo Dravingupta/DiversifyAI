@@ -32,6 +32,20 @@ const protect = async (req, res, next) => {
   }
 };
 
+const requireRole = (...roles) => {
+  const allowedRoles = roles.flat().filter(Boolean);
+
+  return (req, res, next) => {
+    const userRole = (req.user && req.user.role) || "client";
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({ message: "Forbidden: insufficient permissions" });
+    }
+
+    return next();
+  };
+};
+
 module.exports = {
   protect,
+  requireRole,
 };

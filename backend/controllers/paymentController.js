@@ -144,7 +144,67 @@ const verifyPayment = async (req, res) => {
   }
 };
 
+const getAdvisorEarnings = async (req, res) => {
+  try {
+    const advisorId = req.user && req.user._id;
+    const role = (req.user && req.user.role) || "client";
+
+    if (!advisorId) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    if (role !== "advisor") {
+      return res.status(403).json({ message: "Only advisors can access earnings" });
+    }
+
+    const [summary] = await Payment.aggregate([
+      {
+        $match: {
+          advisor: new mongoose.Types.ObjectId(String(advisorId)),
+          status: "paid",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalEarnings: { $sum: "$amount" },
+          paidConsultations: { $sum: 1 },
+          uniqueClientIds: { $addToSet: "$user" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalEarnings: 1,
+          paidConsultations: 1,
+          uniqueClients: { $size: "$uniqueClientIds" },
+        },
+      },
+    ]);
+
+    const recentPayments = await Payment.find({ advisor: advisorId, status: "paid" })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate("user", "name email")
+      .select("amount currency createdAt user");
+
+    return res.status(200).json({
+      stats: {
+        totalEarnings: summary && summary.totalEarnings ? summary.totalEarnings : 0,
+        paidConsultations:
+          summary && summary.paidConsultations ? summary.paidConsultations : 0,
+        uniqueClients: summary && summary.uniqueClients ? summary.uniqueClients : 0,
+      },
+      recentPayments,
+    });
+  } catch (error) {
+    console.error("getAdvisorEarnings error:", error);
+    return res.status(500).json({ message: "Failed to fetch advisor earnings" });
+  }
+};
+
 module.exports = {
   createOrder,
   verifyPayment,
+  getAdvisorEarnings,
 };

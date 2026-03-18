@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
 import { advisors } from '../data/advisors';
-import { createPaymentOrder, getStoredUser, verifyPayment } from '../../services/api';
+import { createPaymentOrder, getAdvisors, getStoredUser, verifyPayment } from '../../services/api';
 import { useChat } from '../../context/ChatContext';
 
 const RAZORPAY_SCRIPT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -36,13 +36,88 @@ function parseConsultationAmount(feeText) {
   return Number.isFinite(amount) && amount > 0 ? amount : 2000;
 }
 
+function mergeAdvisorProfile(advisorAccount, index) {
+  const template = advisors[index % advisors.length] || advisors[0];
+
+  return {
+    id: advisorAccount?._id || template.id,
+    _id: advisorAccount?._id || template._id,
+    name: advisorAccount?.name || template.name,
+    initials: (advisorAccount?.name || template.name)
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('') || template.initials,
+    avatarTone: template.avatarTone,
+    experience: template.experience,
+    rating: template.rating,
+    specialization: template.specialization,
+    languages: template.languages,
+    clients: template.clients,
+    fee: template.fee,
+    bio: template.bio,
+    email: advisorAccount?.email || null,
+  };
+}
+
 function AdvisorDetailPage() {
   const navigate = useNavigate();
   const { advisorId } = useParams();
-  const advisor = advisors.find((item) => item.id === advisorId);
   const { createChat } = useChat();
+  const [advisorAccounts, setAdvisorAccounts] = useState([]);
+  const [isLoadingAdvisor, setIsLoadingAdvisor] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchAdvisors = async () => {
+      try {
+        const response = await getAdvisors();
+        if (!mounted) {
+          return;
+        }
+
+        setAdvisorAccounts(Array.isArray(response?.advisors) ? response.advisors : []);
+      } catch (_error) {
+        if (mounted) {
+          setAdvisorAccounts([]);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoadingAdvisor(false);
+        }
+      }
+    };
+
+    fetchAdvisors();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const advisor = useMemo(() => {
+    const staticMatch = advisors.find(
+      (item) => String(item._id) === String(advisorId) || String(item.id) === String(advisorId)
+    );
+
+    if (advisorAccounts.length === 0) {
+      return staticMatch;
+    }
+
+    const dynamicIndex = advisorAccounts.findIndex(
+      (item) => String(item._id) === String(advisorId)
+    );
+
+    if (dynamicIndex === -1) {
+      return staticMatch;
+    }
+
+    return mergeAdvisorProfile(advisorAccounts[dynamicIndex], dynamicIndex);
+  }, [advisorAccounts, advisorId]);
 
   const handleStartChat = async () => {
     if (isStartingChat) {
@@ -110,7 +185,6 @@ function AdvisorDetailPage() {
     }
 
     const selectedAdvisorId = advisor?._id || advisorId;
-    console.log('advisorId:', advisor?._id);
 
     if (!selectedAdvisorId) {
       alert('Advisor not found');
@@ -191,6 +265,16 @@ function AdvisorDetailPage() {
   };
 
   if (!advisor) {
+    if (isLoadingAdvisor) {
+      return (
+        <AppLayout title="Loading Advisor" subtitle="Fetching consultant profile details.">
+          <div className="enter-up rounded-3xl border border-slate-200 bg-white p-6" style={{ animationDelay: '140ms' }}>
+            <p className="text-slate-600">Loading advisor profile...</p>
+          </div>
+        </AppLayout>
+      );
+    }
+
     return (
       <AppLayout title="Advisor Not Found" subtitle="The requested consultant profile could not be found.">
         <div className="enter-up rounded-3xl border border-slate-200 bg-white p-6" style={{ animationDelay: '140ms' }}>

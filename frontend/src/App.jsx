@@ -6,6 +6,8 @@ import AnalysisPage from './pages/AnalysisPage';
 import AdvisorsPage from './pages/AdvisorsPage';
 import AdvisorDetailPage from './pages/AdvisorDetailPage';
 import ChatHistoryPage from './pages/chat/[chatId]';
+import AdvisorDashboardPage from './pages/AdvisorDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
@@ -19,6 +21,8 @@ function App() {
         <Route path="/analysis" element={<AnalysisPage />} />
         <Route path="/advisors" element={<AdvisorsPage />} />
         <Route path="/advisors/:advisorId" element={<AdvisorDetailPage />} />
+        <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route path="/chat/:chatId" element={<ChatHistoryPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
