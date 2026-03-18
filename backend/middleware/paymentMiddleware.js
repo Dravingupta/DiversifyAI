@@ -3,6 +3,30 @@ const mongoose = require("mongoose");
 const Payment = require("../models/Payment");
 const ChatRoom = require("../models/ChatRoom");
 
+const SESSION_DURATION_HOURS = 24;
+
+const buildActivePaymentQuery = ({ userId, advisorId, now }) => {
+  const fallbackWindowStart = new Date(now.getTime() - SESSION_DURATION_HOURS * 60 * 60 * 1000);
+
+  return {
+    user: userId,
+    advisor: advisorId,
+    status: "paid",
+    $or: [
+      { accessExpiresAt: { $gt: now } },
+      {
+        accessExpiresAt: null,
+        paidAt: { $gte: fallbackWindowStart },
+      },
+      {
+        accessExpiresAt: null,
+        paidAt: null,
+        createdAt: { $gte: fallbackWindowStart },
+      },
+    ],
+  };
+};
+
 const checkPaymentAccess = async (req, res, next) => {
   try {
     const userId = req.user && req.user._id;
@@ -41,15 +65,15 @@ const checkPaymentAccess = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid advisor ID" });
     }
 
-    const payment = await Payment.findOne({
-      user: userId,
-      advisor: advisorId,
-      status: "paid",
-    });
+    const now = new Date();
+
+    const payment = await Payment.findOne(
+      buildActivePaymentQuery({ userId, advisorId, now })
+    ).sort({ paidAt: -1, createdAt: -1 });
 
     if (!payment) {
       return res.status(403).json({
-        message: "Access denied. Please complete payment first.",
+        message: "Session expired or payment missing. Please complete payment to unlock chat for 24 hours.",
       });
     }
 

@@ -2,7 +2,40 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 
 const Payment = require("../models/Payment");
+const ChatRoom = require("../models/ChatRoom");
+const Message = require("../models/Message");
+const Portfolio = require("../models/Portfolio");
 const razorpay = require("../services/razorpayService");
+
+const SESSION_DURATION_HOURS = 24;
+
+const formatPortfolioSnapshot = (portfolio) => {
+  const stocks = Array.isArray(portfolio && portfolio.stocks) ? portfolio.stocks : [];
+
+  if (stocks.length === 0) {
+    return [
+      "Consultation session started.",
+      "Portfolio snapshot: client currently has no stocks in portfolio.",
+      "Please begin with risk profiling and allocation planning.",
+    ].join("\n");
+  }
+
+  const totalInvestment = stocks.reduce((sum, stock) => {
+    return sum + Number(stock.buyPrice || 0) * Number(stock.quantity || 0);
+  }, 0);
+
+  const topHoldings = stocks.slice(0, 8).map((stock) => {
+    return `- ${stock.symbol}: Qty ${stock.quantity}, Buy ${stock.buyPrice}, Sector ${stock.sector || "Misc"}`;
+  });
+
+  return [
+    "Consultation session started and portfolio auto-shared.",
+    `Holdings count: ${stocks.length}`,
+    `Estimated invested value: INR ${Math.round(totalInvestment)}`,
+    "Top holdings:",
+    ...topHoldings,
+  ].join("\n");
+};
 
 const createOrder = async (req, res) => {
   try {
@@ -119,9 +152,18 @@ const verifyPayment = async (req, res) => {
     payment.advisor = advisorId;
 
     if (isSignatureValid) {
+      const paidAt = new Date();
+      const accessExpiresAt = new Date(
+        paidAt.getTime() + SESSION_DURATION_HOURS * 60 * 60 * 1000
+      );
+
       payment.status = "paid";
+      payment.paidAt = paidAt;
+      payment.accessExpiresAt = accessExpiresAt;
     } else {
       payment.status = "failed";
+      payment.paidAt = null;
+      payment.accessExpiresAt = null;
     }
 
     await payment.save();
@@ -133,10 +175,37 @@ const verifyPayment = async (req, res) => {
       });
     }
 
+    let chatRoom = await ChatRoom.findOne({
+      user: req.user._id,
+      advisor: advisorId,
+    });
+
+    if (!chatRoom) {
+      chatRoom = await ChatRoom.create({
+        user: req.user._id,
+        advisor: advisorId,
+      });
+    }
+
+    chatRoom.sessionUnlockedAt = payment.paidAt;
+    chatRoom.sessionExpiresAt = payment.accessExpiresAt;
+    await chatRoom.save();
+
+    const portfolio = await Portfolio.findOne({ user: req.user._id }).select("stocks");
+    const snapshotMessage = formatPortfolioSnapshot(portfolio);
+
+    await Message.create({
+      chat: chatRoom._id,
+      sender: req.user._id,
+      message: snapshotMessage,
+    });
+
     return res.status(200).json({
       message: "Payment verified successfully",
       status: payment.status,
       paymentId: payment._id,
+      chatId: chatRoom._id,
+      accessExpiresAt: payment.accessExpiresAt,
     });
   } catch (error) {
     console.error("verifyPayment error:", error);

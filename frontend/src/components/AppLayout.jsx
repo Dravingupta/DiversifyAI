@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, PieChart, TrendingUp, Users, Menu, X, Leaf, Briefcase, Shield } from 'lucide-react';
+import { LayoutDashboard, PieChart, TrendingUp, Users, MessageCircle, Menu, X, Leaf, Briefcase, Shield } from 'lucide-react';
 import { getStoredUser, logoutUser } from '../../services/api';
 
 const NavItem = ({ to, icon: Icon, label }) => (
@@ -84,7 +84,10 @@ function AppLayout({ title, subtitle, children }) {
               ) : currentUserRole === 'advisor' ? (
                 <NavItem to="/advisor/dashboard" icon={Briefcase} label="Advisor Desk" />
               ) : (
-                <NavItem to="/advisors" icon={Users} label="Advisors" />
+                <>
+                  <NavItem to="/advisors" icon={Users} label="Advisors" />
+                  <NavItem to="/consultations" icon={MessageCircle} label="Consultations" />
+                </>
               )}
             </div>
           </nav>
@@ -161,9 +164,14 @@ function AppLayout({ title, subtitle, children }) {
                 <Briefcase className="h-4 w-4 opacity-70" /> Advisor Desk
               </NavLink>
             ) : (
-              <NavLink to="/advisors" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
-                <Users className="h-4 w-4 opacity-70" /> Advisors
-              </NavLink>
+              <>
+                <NavLink to="/advisors" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
+                  <Users className="h-4 w-4 opacity-70" /> Advisors
+                </NavLink>
+                <NavLink to="/consultations" className={({isActive}) => `flex items-center gap-3 rounded-xl p-3 text-sm font-semibold transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
+                  <MessageCircle className="h-4 w-4 opacity-70" /> Consultations
+                </NavLink>
+              </>
             )}
             
             <div className="my-2 h-px w-full bg-slate-200/50" />

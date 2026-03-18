@@ -15,6 +15,15 @@ const chatRoomSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  sessionUnlockedAt: {
+    type: Date,
+    default: null,
+  },
+  sessionExpiresAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

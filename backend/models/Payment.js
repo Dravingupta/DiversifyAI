@@ -47,6 +47,16 @@ const paymentSchema = new mongoose.Schema({
     default: "created",
     required: true,
   },
+  paidAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
+  accessExpiresAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

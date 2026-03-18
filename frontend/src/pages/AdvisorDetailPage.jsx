@@ -222,11 +222,22 @@ function AdvisorDetailPage() {
         order_id: order.id,
         handler: async function (response) {
           try {
-            await verifyPayment({
+            const verifyResponse = await verifyPayment({
               ...response,
               advisorId: selectedAdvisorId,
             });
-            alert('Payment Successful');
+
+            const unlockedChatId = verifyResponse?.chatId;
+            if (unlockedChatId) {
+              navigate('/chat/' + unlockedChatId, {
+                state: {
+                  advisorName: advisor?.name || 'Advisor',
+                },
+              });
+              return;
+            }
+
+            alert('Payment successful. Chat unlocked for 24 hours.');
           } catch (error) {
             alert(error?.response?.data?.message || 'Payment verification failed');
           } finally {
@@ -343,6 +354,9 @@ function AdvisorDetailPage() {
           </button>
           <Link to="/advisors" className="rounded-xl border border-slate-300 px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-700">
             Back to All Advisors
+          </Link>
+          <Link to="/consultations" className="rounded-xl border border-slate-300 px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-700">
+            View Saved Suggestions
           </Link>
         </div>
       </section>

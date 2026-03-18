@@ -11,11 +11,13 @@ function ChatHistoryPage() {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
   const user = useMemo(() => getStoredUser(), []);
   const userId = user?.id || user?._id || null;
+  const isClient = (user?.role || 'client') === 'client';
 
   const isMyMessage = (msg) => {
     const senderId = msg?.sender?._id || msg?.sender?.id || null;
@@ -98,18 +100,27 @@ function ChatHistoryPage() {
 
     try {
       setError('');
+      setSessionExpired(false);
       setIsSending(true);
       await sendNewMessage(trimmedInput);
       setInput('');
       inputRef.current?.focus();
     } catch (sendError) {
       console.error('Failed to send chat message:', sendError);
-      setError(sendError?.message || 'Message failed. Try again.');
-      alert('Message failed. Try again.');
+      const sendErrorMessage = sendError?.message || 'Message failed. Try again.';
+      const isExpiryError = sendErrorMessage.toLowerCase().includes('expired');
+
+      if (isExpiryError) {
+        setSessionExpired(true);
+      }
+
+      setError(sendErrorMessage);
     } finally {
       setIsSending(false);
     }
   };
+
+  const backRoute = isClient ? '/consultations' : '/advisor/dashboard';
 
   return (
     <div className="chat-page flex h-screen flex-col bg-slate-50">
@@ -120,13 +131,21 @@ function ChatHistoryPage() {
             <p className="text-sm text-emerald-600">Consultation Active</p>
           </div>
           <Link
-            to="/advisors"
+            to={backRoute}
             className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-700 hover:bg-slate-100"
           >
             Back
           </Link>
         </div>
       </header>
+
+      {sessionExpired && isClient ? (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800">
+          Session expired. You can still revisit suggestions, but send new messages after unlocking consultation again.
+          {' '}
+          <Link to="/advisors" className="font-semibold underline">Unlock now</Link>
+        </div>
+      ) : null}
 
       <div className="messages-area flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col">
@@ -182,12 +201,12 @@ function ChatHistoryPage() {
             }}
             placeholder="Type a message..."
             className="flex-1 rounded-lg border border-slate-300 p-2.5 text-sm outline-none transition focus:border-blue-500"
-            disabled={isSending || isFetchingMessages || !chatId}
+            disabled={isSending || isFetchingMessages || !chatId || (isClient && sessionExpired)}
           />
 
           <button
             onClick={handleSendMessage}
-            disabled={!input.trim() || isSending || isFetchingMessages || !chatId}
+            disabled={!input.trim() || isSending || isFetchingMessages || !chatId || (isClient && sessionExpired)}
             className="rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             {isSending ? 'Sending...' : 'Send'}

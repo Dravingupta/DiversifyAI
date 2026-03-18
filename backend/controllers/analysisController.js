@@ -11,8 +11,18 @@ const analyzePortfolio = async (req, res) => {
     const portfolio = await Portfolio.findOne({ user: req.user._id });
 
     if (!portfolio || portfolio.stocks.length === 0) {
-      return res.status(400).json({ 
-        message: 'No portfolio found. Please add stocks before running analysis.' 
+      return res.status(200).json({
+        diversificationScore: 0,
+        riskScore: 0,
+        portfolioHealth: 0,
+        marketCapMix: {
+          'Large Cap': 0,
+          'Mid Cap': 0,
+          'Small Cap': 0,
+        },
+        recommendations: [
+          'Add stocks to your portfolio to unlock AI analysis and advisor-ready insights.'
+        ],
       });
     }
 

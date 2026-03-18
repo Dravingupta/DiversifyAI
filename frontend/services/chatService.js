@@ -85,3 +85,12 @@ export const getAdvisorChatRooms = async () => {
     throw new Error(getErrorMessage(error, 'Failed to fetch advisor chat rooms'));
   }
 };
+
+export const getClientChatRooms = async () => {
+  try {
+    const response = await chatApi.get('/client/rooms', getAuthConfig());
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, 'Failed to fetch consultation history'));
+  }
+};

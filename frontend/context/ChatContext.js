@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { createChatRoom, getMessages, sendMessage } from '../services/chatService';
 
 const ChatContext = createContext();
@@ -14,7 +14,7 @@ export const ChatProvider = ({ children }) => {
     }
   }, [chatId]);
 
-  const createChat = async (advisorId) => {
+  const createChat = useCallback(async (advisorId) => {
     setLoading(true);
 
     try {
@@ -35,9 +35,9 @@ export const ChatProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchMessages = async (targetChatId) => {
+  const fetchMessages = useCallback(async (targetChatId) => {
     const activeChatId = targetChatId || chatId;
 
     if (!activeChatId) {
@@ -59,9 +59,9 @@ export const ChatProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [chatId]);
 
-  const sendNewMessage = async (message) => {
+  const sendNewMessage = useCallback(async (message) => {
     if (!chatId) {
       const error = new Error('No active chat. Please create a chat room first.');
       console.error('sendNewMessage error:', error);
@@ -96,19 +96,24 @@ export const ChatProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [chatId]);
+
+  const contextValue = useMemo(
+    () => ({
+      chatId,
+      messages,
+      loading,
+      createChat,
+      fetchMessages,
+      sendNewMessage,
+    }),
+    [chatId, messages, loading, createChat, fetchMessages, sendNewMessage]
+  );
 
   return React.createElement(
     ChatContext.Provider,
     {
-      value: {
-        chatId,
-        messages,
-        loading,
-        createChat,
-        fetchMessages,
-        sendNewMessage,
-      },
+      value: contextValue,
     },
     children
   );
