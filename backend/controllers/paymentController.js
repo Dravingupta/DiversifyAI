@@ -97,7 +97,13 @@ const verifyPayment = async (req, res) => {
 
     payment.razorpay_payment_id = razorpay_payment_id;
     payment.razorpay_signature = razorpay_signature;
-    payment.status = isSignatureValid ? "paid" : "failed";
+
+    if (isSignatureValid) {
+      payment.status = "paid";
+    } else {
+      payment.status = "failed";
+    }
+
     await payment.save();
 
     if (!isSignatureValid) {

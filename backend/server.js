@@ -10,6 +10,7 @@ const healthRoutes = require("./routes/healthRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
 const analysisRoutes = require("./routes/analysisRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 const { startDailyPriceUpdate } = require("./jobs/cronJobs");
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/analysis", analysisRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api", healthRoutes);
 
 const startServer = async () => {
