@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '../components/AppLayout';
-import { getPortfolio, getSectorDistribution, analyzePortfolio } from '../../services/api';
+import { getPortfolio, getSectorDistribution, getLatestAnalysis } from '../../services/api';
 
 function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -9,33 +9,62 @@ function DashboardPage() {
   const [portfolioData, setPortfolioData] = useState(null);
   const [sectorData, setSectorData] = useState({});
   const [analysisData, setAnalysisData] = useState(null);
+  const [isRefreshingPrices, setIsRefreshingPrices] = useState(false);
+
+  const fetchData = async (options = {}) => {
+    try {
+      setLoading(true);
+      const [portfolio, sectors, analysis] = await Promise.all([
+        getPortfolio({ forceRefresh: options.forceRefresh }),
+        getSectorDistribution(),
+        getLatestAnalysis().catch(err => {
+          console.error('Latest analysis fetch failed:', err);
+          return null;
+        })
+      ]);
+
+      setPortfolioData(portfolio);
+      setSectorData(sectors);
+      setAnalysisData(analysis);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [portfolio, sectors, analysis] = await Promise.all([
-          getPortfolio(),
-          getSectorDistribution(),
-          analyzePortfolio().catch(err => {
-            console.error('Analysis failed:', err);
-            return null; // Fallback if analysis fails
-          })
-        ]);
-        
-        setPortfolioData(portfolio);
-        setSectorData(sectors);
-        setAnalysisData(analysis);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const handleManualPriceRefresh = async () => {
+    try {
+      setIsRefreshingPrices(true);
+      await fetchData({ forceRefresh: true });
+    } finally {
+      setIsRefreshingPrices(false);
+    }
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) {
+      return 'Not updated yet';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return 'Not updated yet';
+    }
+
+    return parsed.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   if (loading) {
     return (
@@ -177,6 +206,20 @@ function DashboardPage() {
       title="Investment Command Dashboard"
       subtitle="A high-clarity overview of portfolio value, risk posture, diversification quality, and recommendation momentum."
     >
+      <section className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+        <p className="text-sm text-slate-600">
+          Prices last refreshed:{' '}
+          <span className="font-semibold text-slate-800">{formatDateTime(portfolioData?.pricesLastUpdatedAt)}</span>
+        </p>
+        <button
+          onClick={handleManualPriceRefresh}
+          disabled={isRefreshingPrices}
+          className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isRefreshingPrices ? 'Refreshing...' : 'Refresh Prices Now'}
+        </button>
+      </section>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {topCards.map(([label, value, helper], index) => (
           <article key={label} className="hover-panel enter-up rounded-2xl border border-slate-200 bg-white p-5" style={{ animationDelay: `${120 + index * 60}ms` }}>

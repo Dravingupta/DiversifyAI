@@ -9,32 +9,74 @@ const razorpay = require("../services/razorpayService");
 
 const SESSION_DURATION_HOURS = 24;
 
-const formatPortfolioSnapshot = (portfolio) => {
+const buildPortfolioSnapshot = (portfolio) => {
   const stocks = Array.isArray(portfolio && portfolio.stocks) ? portfolio.stocks : [];
 
   if (stocks.length === 0) {
-    return [
-      "Consultation session started.",
-      "Portfolio snapshot: client currently has no stocks in portfolio.",
-      "Please begin with risk profiling and allocation planning.",
-    ].join("\n");
+    return {
+      text: "Consultation started: client portfolio is currently empty.",
+      payload: {
+        holdingsCount: 0,
+        totalInvestment: 0,
+        totalCurrentValue: 0,
+        sectors: [],
+        holdings: [],
+      },
+    };
   }
 
-  const totalInvestment = stocks.reduce((sum, stock) => {
-    return sum + Number(stock.buyPrice || 0) * Number(stock.quantity || 0);
-  }, 0);
+  let totalInvestment = 0;
+  let totalCurrentValue = 0;
+  const sectorValues = {};
 
-  const topHoldings = stocks.slice(0, 8).map((stock) => {
-    return `- ${stock.symbol}: Qty ${stock.quantity}, Buy ${stock.buyPrice}, Sector ${stock.sector || "Misc"}`;
+  const holdings = stocks.map((stock) => {
+    const quantity = Number(stock.quantity || 0);
+    const buyPrice = Number(stock.buyPrice || 0);
+    const invested = buyPrice * quantity;
+    const currentValue = Number(stock.currentValue || invested);
+
+    totalInvestment += invested;
+    totalCurrentValue += currentValue;
+
+    const sectorName = stock.sector || "Misc";
+    sectorValues[sectorName] = (sectorValues[sectorName] || 0) + currentValue;
+
+    return {
+      symbol: stock.symbol,
+      sector: sectorName,
+      quantity,
+      buyPrice,
+      currentValue,
+    };
   });
 
-  return [
-    "Consultation session started and portfolio auto-shared.",
-    `Holdings count: ${stocks.length}`,
-    `Estimated invested value: INR ${Math.round(totalInvestment)}`,
-    "Top holdings:",
-    ...topHoldings,
-  ].join("\n");
+  const sortedHoldings = holdings
+    .slice()
+    .sort((a, b) => b.currentValue - a.currentValue)
+    .map((holding) => ({
+      ...holding,
+      weight: totalCurrentValue > 0 ? Math.round((holding.currentValue / totalCurrentValue) * 100) : 0,
+    }))
+    .slice(0, 8);
+
+  const sectors = Object.entries(sectorValues)
+    .map(([name, value]) => ({
+      name,
+      allocation: totalCurrentValue > 0 ? Math.round((value / totalCurrentValue) * 100) : 0,
+    }))
+    .sort((a, b) => b.allocation - a.allocation)
+    .slice(0, 6);
+
+  return {
+    text: `Consultation started: portfolio snapshot shared (${stocks.length} holdings, invested INR ${Math.round(totalInvestment).toLocaleString("en-IN")}).`,
+    payload: {
+      holdingsCount: stocks.length,
+      totalInvestment,
+      totalCurrentValue,
+      sectors,
+      holdings: sortedHoldings,
+    },
+  };
 };
 
 const createOrder = async (req, res) => {
@@ -192,12 +234,14 @@ const verifyPayment = async (req, res) => {
     await chatRoom.save();
 
     const portfolio = await Portfolio.findOne({ user: req.user._id }).select("stocks");
-    const snapshotMessage = formatPortfolioSnapshot(portfolio);
+    const snapshot = buildPortfolioSnapshot(portfolio);
 
     await Message.create({
       chat: chatRoom._id,
       sender: req.user._id,
-      message: snapshotMessage,
+      message: snapshot.text,
+      messageType: "portfolio_snapshot",
+      payload: snapshot.payload,
     });
 
     return res.status(200).json({

@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
 import { advisors } from '../data/advisors';
 import { createPaymentOrder, getAdvisors, getStoredUser, verifyPayment } from '../../services/api';
-import { useChat } from '../../context/ChatContext';
 
 const RAZORPAY_SCRIPT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
 const FALLBACK_TEST_RAZORPAY_KEY = 'rzp_test_your_key';
@@ -64,11 +63,9 @@ function mergeAdvisorProfile(advisorAccount, index) {
 function AdvisorDetailPage() {
   const navigate = useNavigate();
   const { advisorId } = useParams();
-  const { createChat } = useChat();
   const [advisorAccounts, setAdvisorAccounts] = useState([]);
   const [isLoadingAdvisor, setIsLoadingAdvisor] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
-  const [isStartingChat, setIsStartingChat] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -118,55 +115,6 @@ function AdvisorDetailPage() {
 
     return mergeAdvisorProfile(advisorAccounts[dynamicIndex], dynamicIndex);
   }, [advisorAccounts, advisorId]);
-
-  const handleStartChat = async () => {
-    if (isStartingChat) {
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Please login to start chat');
-      return;
-    }
-
-    const selectedAdvisorId = advisor?._id || advisorId;
-
-    if (!selectedAdvisorId) {
-      alert('Advisor not found');
-      return;
-    }
-
-    setIsStartingChat(true);
-
-    try {
-      const response = await createChat(selectedAdvisorId);
-      const createdChatId = response?.chatId;
-
-      if (!createdChatId) {
-        throw new Error('Unable to start chat right now');
-      }
-
-      navigate('/chat/' + createdChatId, {
-        state: {
-          advisorName: advisor?.name || 'Advisor',
-        },
-      });
-    } catch (error) {
-      const errorMessage = error?.message || 'Unable to start chat right now';
-      const isPaymentError =
-        errorMessage.toLowerCase().includes('access denied') ||
-        errorMessage.toLowerCase().includes('payment');
-
-      if (isPaymentError) {
-        alert('Please complete payment to start chat');
-      } else {
-        alert(errorMessage);
-      }
-    } finally {
-      setIsStartingChat(false);
-    }
-  };
 
   const handlePayment = async () => {
     if (isPaying) {
@@ -344,13 +292,6 @@ function AdvisorDetailPage() {
             disabled={isPaying}
           >
             {isPaying ? 'Processing...' : 'Book Consultation'}
-          </button>
-          <button
-            className="rounded-xl border border-slate-300 px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={handleStartChat}
-            disabled={isStartingChat}
-          >
-            {isStartingChat ? 'Starting chat...' : 'Start Chat'}
           </button>
           <Link to="/advisors" className="rounded-xl border border-slate-300 px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-700">
             Back to All Advisors

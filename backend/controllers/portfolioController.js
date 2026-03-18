@@ -2,6 +2,8 @@ const Portfolio = require('../models/Portfolio');
 const { default: YahooFinance } = require('yahoo-finance2');
 const yahooFinance = new YahooFinance();
 
+const PRICE_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
 const searchStocks = async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(200).json([]);
@@ -31,30 +33,52 @@ const getPortfolio = async (req, res) => {
         totalInvestment: 0,
         totalStocks: 0,
         stocks: [],
+        pricesLastUpdatedAt: null,
       });
     }
 
-    let isModified = false;
+    const now = new Date();
+    const forceRefresh =
+      req.query &&
+      (req.query.forceRefresh === '1' || req.query.forceRefresh === 'true');
+    const lastRefreshAt = portfolio.pricesLastUpdatedAt
+      ? new Date(portfolio.pricesLastUpdatedAt)
+      : null;
+    const shouldRefreshPrices =
+      forceRefresh || !lastRefreshAt || now.getTime() - lastRefreshAt.getTime() >= PRICE_REFRESH_INTERVAL_MS;
 
-    const pricePromises = portfolio.stocks.map(async (stock) => {
-      try {
-        const quote = await yahooFinance.quote(stock.symbol + '.NS');
-        if (quote && quote.regularMarketPrice) {
-          const livePricePerShare = quote.regularMarketPrice;
-          const newCurrentValue = livePricePerShare * stock.quantity;
-          
-          if (stock.currentValue !== newCurrentValue) {
-            stock.currentValue = newCurrentValue;
-            isModified = true;
+    if (shouldRefreshPrices) {
+      let isModified = false;
+
+      const pricePromises = portfolio.stocks.map(async (stock) => {
+        try {
+          const quote = await yahooFinance.quote(stock.symbol + '.NS');
+          if (quote && quote.regularMarketPrice) {
+            const livePricePerShare = quote.regularMarketPrice;
+            const newCurrentValue = livePricePerShare * stock.quantity;
+
+            if (stock.currentValue !== newCurrentValue) {
+              stock.currentValue = newCurrentValue;
+              isModified = true;
+            }
           }
+        } catch (err) {
+          console.error('Error fetching price for', stock.symbol, err.message);
         }
-      } catch (err) {
-        console.error('Error fetching price for', stock.symbol, err.message);
-      }
-    });
+      });
 
-    await Promise.all(pricePromises);
-    if (isModified) await portfolio.save();
+      await Promise.all(pricePromises);
+      portfolio.pricesLastUpdatedAt = now;
+
+      if (isModified || !lastRefreshAt) {
+        await portfolio.save();
+      } else {
+        await Portfolio.updateOne(
+          { _id: portfolio._id },
+          { $set: { pricesLastUpdatedAt: now } }
+        );
+      }
+    }
 
     let totalInvestment = 0;
     const processedStocks = portfolio.stocks.map((stock) => {
@@ -72,6 +96,7 @@ const getPortfolio = async (req, res) => {
       totalInvestment,
       totalStocks: processedStocks.length,
       stocks: processedStocks,
+      pricesLastUpdatedAt: portfolio.pricesLastUpdatedAt || null,
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error retrieving portfolio', error: error.message });
@@ -114,6 +139,7 @@ const addStockToPortfolio = async (req, res) => {
     };
 
     portfolio.stocks.push(newStock);
+    portfolio.pricesLastUpdatedAt = new Date();
     await portfolio.save();
 
     res.status(201).json({ message: 'Stock added', stock: newStock });
@@ -156,6 +182,7 @@ const removeStockFromPortfolio = async (req, res) => {
     }
 
     portfolio.stocks = portfolio.stocks.filter(stock => stock.symbol !== symbol.toUpperCase());
+    portfolio.pricesLastUpdatedAt = new Date();
     await portfolio.save();
 
     res.status(200).json({ message: 'Stock removed successfully' });

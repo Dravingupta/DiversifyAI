@@ -150,7 +150,7 @@ function ConsultationsPage() {
                     state={{ advisorName: room?.advisor?.name || 'Advisor' }}
                     className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-700"
                   >
-                    Open Chat History
+                    {room?.isSessionActive ? 'Open Chat' : 'Open Chat History'}
                   </Link>
                   {!room?.isSessionActive ? (
                     <Link

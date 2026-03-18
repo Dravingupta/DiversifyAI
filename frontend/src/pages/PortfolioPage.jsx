@@ -105,13 +105,28 @@ function PortfolioPage() {
       title="Portfolio Management"
       subtitle="Add holdings, review stock-level exposure, and monitor allocation quality before triggering analysis."
     >
-      <section className="enter-up rounded-3xl border border-slate-200 bg-white p-6" style={{ animationDelay: '130ms' }}>
-        <h2 className="font-display text-2xl tracking-tight">Add New Holding</h2>
-        {errorMsg && <div className="mt-4 text-sm text-red-500 font-semibold">{errorMsg}</div>}
+      <section className="enter-up relative z-20 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm" style={{ animationDelay: '130ms' }}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl tracking-tight">Add New Holding</h2>
+            <p className="mt-1 text-sm text-slate-600">Search on NSE/BSE, pick a stock, then enter quantity and buy price.</p>
+          </div>
+          {formData.symbol ? (
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
+              Selected: {formData.symbol}
+            </span>
+          ) : (
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+              No Stock Selected
+            </span>
+          )}
+        </div>
+
+        {errorMsg && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{errorMsg}</div>}
         <form className="mt-5 grid gap-4 md:grid-cols-4" onSubmit={handleAddStock}>
           
           {/* Autocomplete Input Field */}
-          <div className="relative col-span-1">
+          <div className="relative z-50 col-span-1">
             <input 
               className="input-shell w-full" 
               placeholder="Search Stock (e.g. RELI)" 
@@ -125,7 +140,7 @@ function PortfolioPage() {
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             />
             {showSuggestions && searchQuery && (
-              <div className="absolute top-full z-50 mt-2 w-full min-w-[200px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+              <div className="absolute top-full z-[80] mt-2 w-full min-w-[240px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-100">
                 {isSearching ? (
                   <div className="p-3 text-sm text-slate-500 text-center flex items-center justify-center space-x-2">
                     <svg className="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
@@ -181,7 +196,7 @@ function PortfolioPage() {
         </form>
       </section>
 
-      <section className="enter-up mt-6 rounded-3xl border border-slate-200 bg-white p-6" style={{ animationDelay: '220ms' }}>
+      <section className="enter-up relative z-10 mt-6 rounded-3xl border border-slate-200 bg-white p-6" style={{ animationDelay: '220ms' }}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-2xl tracking-tight">Current Holdings</h2>

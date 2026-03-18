@@ -87,8 +87,9 @@ export const searchIndianStocks = async (query) => {
   return response.data;
 };
 
-export const getPortfolio = async () => {
-  const response = await api.get('/portfolio');
+export const getPortfolio = async (options = {}) => {
+  const forceRefresh = options && options.forceRefresh ? '?forceRefresh=true' : '';
+  const response = await api.get('/portfolio' + forceRefresh);
   return response.data;
 };
 
@@ -111,6 +112,11 @@ export const getSectorDistribution = async () => {
 // Analysis APIs
 export const analyzePortfolio = async () => {
   const response = await api.post('/analysis/portfolio');
+  return response.data;
+};
+
+export const getLatestAnalysis = async () => {
+  const response = await api.get('/analysis/latest');
   return response.data;
 };
 

@@ -33,6 +33,9 @@ function AnalysisPage() {
           <p className="mt-2 max-w-md text-slate-500">
             Our AI engine will scan your holdings, evaluate risk, determine diversification quality, and give you actionable rebalancing steps.
           </p>
+          <p className="mt-2 max-w-md text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+            Analysis is user-triggered only and capped to one generation per day.
+          </p>
           {errorMsg && <p className="mt-4 text-sm font-semibold text-red-500">{errorMsg}</p>}
           <button 
             onClick={handleRunAnalysis}
@@ -96,6 +99,12 @@ function AnalysisPage() {
                 Re-run Analysis
               </button>
             </div>
+
+            <p className="mb-5 text-xs uppercase tracking-[0.12em] text-emerald-200/90">
+              {analysisData?.isCached
+                ? 'Showing cached daily analysis. New generation available after next day reset.'
+                : 'Fresh analysis generated for today.'}
+            </p>
             
             <div className="grid gap-4 md:grid-cols-2 relative z-10">
               {analysisData.recommendations.map((rec, i) => (

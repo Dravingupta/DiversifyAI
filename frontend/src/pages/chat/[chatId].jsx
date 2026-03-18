@@ -3,6 +3,105 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { useChat } from '../../../context/ChatContext';
 import { getStoredUser } from '../../../services/api';
 
+const CHAT_POLL_INTERVAL_MS = 3000;
+
+const formatCurrency = (value) => {
+  const numericValue = Number(value || 0);
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(numericValue);
+};
+
+const parseLegacyPortfolioSnapshot = (messageText) => {
+  const text = typeof messageText === 'string' ? messageText : '';
+  if (!text) {
+    return null;
+  }
+
+  const normalized = text.toLowerCase();
+  const looksLikeSnapshot =
+    normalized.includes('consultation session started') &&
+    (normalized.includes('portfolio auto-shared') || normalized.includes('portfolio snapshot'));
+
+  if (!looksLikeSnapshot) {
+    return null;
+  }
+
+  if (normalized.includes('currently has no stocks')) {
+    return {
+      holdingsCount: 0,
+      totalInvestment: 0,
+      totalCurrentValue: 0,
+      sectors: [],
+      holdings: [],
+    };
+  }
+
+  const holdingsCountMatch = text.match(/Holdings count:\s*(\d+)/i);
+  const investedMatch = text.match(/Estimated invested value:\s*INR\s*([\d,]+)/i);
+  const lines = text.split('\n').map((line) => line.trim());
+
+  const holdings = lines
+    .filter((line) => line.startsWith('-'))
+    .map((line) => {
+      const match = line.match(/^-\s*([A-Z0-9._-]+):\s*Qty\s*([\d.]+),\s*Buy\s*([\d.]+),\s*Sector\s*(.+)$/i);
+      if (!match) {
+        return null;
+      }
+
+      const symbol = (match[1] || '').trim();
+      const quantity = Number(match[2] || 0);
+      const buyPrice = Number(match[3] || 0);
+      const sector = (match[4] || 'Misc').trim();
+      const currentValue = quantity * buyPrice;
+
+      return {
+        symbol,
+        quantity,
+        buyPrice,
+        sector,
+        currentValue,
+      };
+    })
+    .filter(Boolean);
+
+  const totalInvestmentFromHeader = Number((investedMatch && investedMatch[1] ? investedMatch[1] : '0').replace(/,/g, ''));
+  const totalFromHoldings = holdings.reduce((sum, h) => sum + Number(h.currentValue || 0), 0);
+  const totalInvestment = totalInvestmentFromHeader > 0 ? totalInvestmentFromHeader : totalFromHoldings;
+  const totalCurrentValue = totalFromHoldings;
+
+  const holdingsWithWeights = holdings
+    .map((holding) => ({
+      ...holding,
+      weight: totalCurrentValue > 0 ? Math.round((holding.currentValue / totalCurrentValue) * 100) : 0,
+    }))
+    .slice(0, 8);
+
+  const sectorMap = holdingsWithWeights.reduce((acc, holding) => {
+    const sectorName = holding.sector || 'Misc';
+    acc[sectorName] = (acc[sectorName] || 0) + Number(holding.currentValue || 0);
+    return acc;
+  }, {});
+
+  const sectors = Object.entries(sectorMap)
+    .map(([name, value]) => ({
+      name,
+      allocation: totalCurrentValue > 0 ? Math.round((value / totalCurrentValue) * 100) : 0,
+    }))
+    .sort((a, b) => b.allocation - a.allocation)
+    .slice(0, 6);
+
+  return {
+    holdingsCount: Number(holdingsCountMatch ? holdingsCountMatch[1] : holdings.length),
+    totalInvestment,
+    totalCurrentValue,
+    sectors,
+    holdings: holdingsWithWeights,
+  };
+};
+
 function ChatHistoryPage() {
   const { chatId } = useParams();
   const location = useLocation();
@@ -14,6 +113,8 @@ function ChatHistoryPage() {
   const [sessionExpired, setSessionExpired] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const lastMessageCountRef = useRef(0);
+  const isPollingInProgressRef = useRef(false);
 
   const user = useMemo(() => getStoredUser(), []);
   const userId = user?.id || user?._id || null;
@@ -71,8 +172,38 @@ function ChatHistoryPage() {
   }, [chatId, fetchMessages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const currentCount = Array.isArray(messages) ? messages.length : 0;
+    if (currentCount > lastMessageCountRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    lastMessageCountRef.current = currentCount;
   }, [messages]);
+
+  useEffect(() => {
+    if (!chatId) {
+      return undefined;
+    }
+
+    const intervalId = setInterval(async () => {
+      if (isPollingInProgressRef.current) {
+        return;
+      }
+
+      try {
+        isPollingInProgressRef.current = true;
+        await fetchMessages(chatId);
+      } catch (_pollError) {
+        // Keep polling quiet in background; foreground errors are still shown from user actions.
+      } finally {
+        isPollingInProgressRef.current = false;
+      }
+    }, CHAT_POLL_INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [chatId, fetchMessages]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -122,6 +253,74 @@ function ChatHistoryPage() {
 
   const backRoute = isClient ? '/consultations' : '/advisor/dashboard';
 
+  const renderPortfolioSnapshotCard = (msg, mine, fallbackPayload) => {
+    const payload = msg?.payload || fallbackPayload || {};
+    const sectors = Array.isArray(payload?.sectors) ? payload.sectors : [];
+    const holdings = Array.isArray(payload?.holdings) ? payload.holdings : [];
+
+    return (
+      <div className={mine ? 'max-w-2xl rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm' : 'max-w-2xl rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm'}>
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Portfolio Snapshot</p>
+        <p className="mt-2 text-sm text-slate-700">{msg?.message || 'Portfolio details shared.'}</p>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Holdings</p>
+            <p className="mt-1 text-xl font-black text-slate-800">{payload?.holdingsCount || 0}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Invested</p>
+            <p className="mt-1 text-sm font-bold text-slate-800">{formatCurrency(payload?.totalInvestment)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Current</p>
+            <p className="mt-1 text-sm font-bold text-slate-800">{formatCurrency(payload?.totalCurrentValue)}</p>
+          </div>
+        </div>
+
+        {sectors.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Sector Allocation</p>
+            {sectors.map((sector) => (
+              <div key={sector.name}>
+                <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+                  <span>{sector.name}</span>
+                  <span>{sector.allocation}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-200">
+                  <div className="h-1.5 rounded-full bg-emerald-500" style={{ width: `${sector.allocation}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {holdings.length > 0 ? (
+          <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <table className="min-w-full text-xs">
+              <thead className="bg-slate-50 text-slate-500">
+                <tr>
+                  <th className="px-2 py-2 text-left">Stock</th>
+                  <th className="px-2 py-2 text-left">Sector</th>
+                  <th className="px-2 py-2 text-left">Wt</th>
+                </tr>
+              </thead>
+              <tbody>
+                {holdings.map((holding) => (
+                  <tr key={holding.symbol} className="border-t border-slate-100 text-slate-700">
+                    <td className="px-2 py-2 font-semibold">{holding.symbol}</td>
+                    <td className="px-2 py-2">{holding.sector}</td>
+                    <td className="px-2 py-2">{holding.weight}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <div className="chat-page flex h-screen flex-col bg-slate-50">
       <header className="chat-header border-b border-slate-200 bg-white px-4 py-3 shadow-sm md:px-6">
@@ -158,21 +357,27 @@ function ChatHistoryPage() {
               const mine = isMyMessage(msg);
               const senderName = msg?.sender?.name || 'Unknown';
               const messageTime = formatTime(msg?.createdAt);
+              const legacyPayload = parseLegacyPortfolioSnapshot(msg?.message);
+              const isPortfolioSnapshot = msg?.messageType === 'portfolio_snapshot' || Boolean(legacyPayload);
 
               return (
                 <div
                   key={msg?._id || index}
                   className={mine ? 'mb-3 flex flex-col items-end gap-1' : 'mb-3 flex flex-col items-start gap-1'}
                 >
-                  <div
-                    className={
-                      mine
-                        ? 'my-message max-w-xs break-words rounded-xl bg-blue-500 px-4 py-2 text-sm text-white shadow-sm sm:max-w-md'
-                        : 'other-message max-w-xs break-words rounded-xl bg-gray-200 px-4 py-2 text-sm text-slate-900 shadow-sm sm:max-w-md'
-                    }
-                  >
-                    <p className="whitespace-pre-wrap">{msg?.message || ''}</p>
-                  </div>
+                  {isPortfolioSnapshot
+                    ? renderPortfolioSnapshotCard(msg, mine, legacyPayload)
+                    : (
+                      <div
+                        className={
+                          mine
+                            ? 'my-message max-w-xs break-words rounded-xl bg-blue-500 px-4 py-2 text-sm text-white shadow-sm sm:max-w-md'
+                            : 'other-message max-w-xs break-words rounded-xl bg-gray-200 px-4 py-2 text-sm text-slate-900 shadow-sm sm:max-w-md'
+                        }
+                      >
+                        <p className="whitespace-pre-wrap">{msg?.message || ''}</p>
+                      </div>
+                    )}
                   <small className="text-[11px] text-slate-500">
                     {senderName}
                     {messageTime ? ' - ' + messageTime : ''}

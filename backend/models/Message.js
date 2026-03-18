@@ -16,6 +16,16 @@ const messageSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  messageType: {
+    type: String,
+    enum: ["text", "portfolio_snapshot"],
+    default: "text",
+    required: true,
+  },
+  payload: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -19,6 +19,10 @@ const portfolioSchema = new Schema(
       unique: true,
     },
     stocks: [stockSchema],
+    pricesLastUpdatedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
